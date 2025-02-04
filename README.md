@@ -1,4 +1,4 @@
-# amd-bc-250-uds
+# amd-bc-250-udss
 Amd bc-250 universal driver setup script
 
 Automated setup script to configure AMDGPU drivers, including support for Cyan Skillfish (AMD BC-250) on multiple Linux distributions such as Arch, Fedora, Ubuntu, Debian, and CentOS.
@@ -40,4 +40,4 @@ Before running the script, ensure the following:
 To download and execute the script directly from GitHub, run the following command in your terminal:
 
 ```bash
-curl -s https://github.com/itsowntail/amd-bc-250-uds/blob/main/bc250udss.sh | sh
+curl -s https://github.com/itsowntail/amd-bc-250-udss/blob/main/bc250udss.sh | sh
