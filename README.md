@@ -40,4 +40,4 @@ Before running the script, ensure the following:
 To download and execute the script directly from GitHub, run the following command in your terminal:
 
 ```bash
-curl -s https://raw.githubusercontent.com/itsowntail/amd-bc-250-udss/blob/main/bc250udss.sh | sh
+curl -s https://raw.githubusercontent.com/itsowntail/amd-bc-250-udss/refs/heads/main/bc250udss.sh | sh
