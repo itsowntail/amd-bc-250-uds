@@ -1,9 +1,8 @@
 #!/bin/sh
-
-# Set exit on error
+# Устанавливаем строгую проверку ошибок
 set -e
 
-# Function to detect the distribution
+# Функция для определения дистрибутива
 detect_distro() {
     if command -v pacman > /dev/null 2>&1; then
         echo "arch"
@@ -22,21 +21,21 @@ detect_distro() {
 
 DISTRO=$(detect_distro)
 
-# Check if the script is running as root
+# Проверка, что скрипт запущен от имени root
 if [ "$(id -u)" != "0" ]; then
-    echo 'Script must be run as root or with sudo!'
+    echo 'Скрипт должен быть запущен от имени root или с sudo!'
     exit 1
 fi
 
-# Menu for user actions
-echo "Choose an action:"
-echo "1) Install AMDGPU drivers"
-echo "2) Install Patched Mesa drivers"
-echo "3) Remove existing drivers and install new ones"
-echo "4) Configure NCT6686 SuperIO"
-echo "5) Configure Kernel parameters for Cyan Skillfish"
-echo "6) Exit"
-read -p "Enter your choice: " ACTION_CHOICE
+# Меню для выбора действий пользователя
+echo "Выберите действие:"
+echo "1) Установить драйверы AMDGPU"
+echo "2) Установить заплатированные драйверы Mesa"
+echo "3) Удалить существующие драйверы и установить новые"
+echo "4) Настроить NCT6686 SuperIO"
+echo "5) Настроить параметры ядра для Cyan Skillfish"
+echo "6) Выйти"
+read -p "Введите ваш выбор: " ACTION_CHOICE
 
 case $ACTION_CHOICE in
     1)
@@ -55,18 +54,18 @@ case $ACTION_CHOICE in
         CONFIGURE_KERNEL=1
         ;;
     6)
-        echo "Exiting..."
+        echo "Выход..."
         exit 0
         ;;
     *)
-        echo "Invalid choice. Exiting..."
+        echo "Неверный выбор. Выход..."
         exit 1
         ;;
 esac
 
-# Remove existing drivers if selected
+# Удаление существующих драйверов, если выбрано
 if [ "$REMOVE_AND_INSTALL" = "1" ]; then
-    echo "Removing existing AMDGPU drivers..."
+    echo "Удаление существующих драйверов AMDGPU..."
     case $DISTRO in
         arch)
             pacman -Rns --noconfirm amdgpu-dkms mesa
@@ -78,10 +77,10 @@ if [ "$REMOVE_AND_INSTALL" = "1" ]; then
             apt purge -y amdgpu-dkms mesa-vulkan-drivers
             ;;
     esac
-    echo "Existing drivers removed. Proceeding to install new ones..."
+    echo "Существующие драйверы удалены. Переходим к установке новых..."
 fi
 
-# Install drivers based on user choice
+# Установка драйверов в зависимости от выбора пользователя
 if [ "$INSTALL_AMDGPU" = "1" ] || [ "$INSTALL_MESA" = "1" ] || [ "$REMOVE_AND_INSTALL" = "1" ]; then
     case $DISTRO in
         arch)
@@ -106,10 +105,21 @@ if [ "$INSTALL_AMDGPU" = "1" ] || [ "$INSTALL_MESA" = "1" ] || [ "$REMOVE_AND_IN
             ;;
         ubuntu|debian)
             apt update && apt upgrade -y
+            apt install -y dialog  # Добавляем dialog для обеспечения зависимостей
             apt install -y lm-sensors
+            
             if [ "$INSTALL_AMDGPU" = "1" ] || [ "$REMOVE_AND_INSTALL" = "1" ]; then
+                # Устанавливаем зависимости
+                apt install -y wget software-properties-common
+                
+                # Загружаем и устанавливаем amdgpu-install
                 wget https://repo.radeon.com/amdgpu-install/21.50/ubuntu/focal/amdgpu-install_21.50.50000-1_all.deb
-                dpkg -i amdgpu-install_21.50.50000-1_all.deb
+                dpkg -i amdgpu-install_21.50.50000-1_all.deb || true  # Используем || true чтобы игнорировать ошибки dpkg
+                
+                # Фиксим проблемы зависимостей
+                apt --fix-broken install -y
+                
+                # Продолжаем с основной установкой
                 amdgpu-install --usecase=graphics,opencl,openclsdk --no-dkms --no-32 --accept-eula
                 apt install -y "linux-headers-$(uname -r)" "linux-modules-extra-$(uname -r)"
                 usermod -a -G render,video $LOGNAME
@@ -124,9 +134,9 @@ if [ "$INSTALL_AMDGPU" = "1" ] || [ "$INSTALL_MESA" = "1" ] || [ "$REMOVE_AND_IN
     esac
 fi
 
-# Configure NCT6686 SuperIO
+# Настройка NCT6686 SuperIO
 if [ "$CONFIGURE_NCT6686" = "1" ]; then
-    echo "Configuring NCT6686 SuperIO..."
+    echo "Настройка NCT6686 SuperIO..."
     echo 'options nct6775 force=1' > /etc/modprobe.d/sensors.conf
     echo 'nct6775' > /etc/modules-load.d/99-sensors.conf
     case $DISTRO in
@@ -142,9 +152,9 @@ if [ "$CONFIGURE_NCT6686" = "1" ]; then
     esac
 fi
 
-# Configure kernel parameters for Cyan Skillfish
+# Настройка параметров ядра для Cyan Skillfish
 if [ "$CONFIGURE_KERNEL" = "1" ]; then
-    echo "Configuring Kernel parameters for Cyan Skillfish..."
+    echo "Настройка параметров ядра для Cyan Skillfish..."
     if ! grep -q "amdgpu.sg_display=0" /etc/default/grub; then
         sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="/&amdgpu.sg_display=0 /' /etc/default/grub
         case $DISTRO in
@@ -158,6 +168,6 @@ if [ "$CONFIGURE_KERNEL" = "1" ]; then
     fi
 fi
 
-# Completion message
-echo "Done! Rebooting system in 15 seconds, ctrl-C now to cancel..."
+# Сообщение о завершении
+echo "Готово! Перезагрузка системы через 15 секунд, нажмите Ctrl+C сейчас, чтобы отменить..."
 sleep 15 && reboot
