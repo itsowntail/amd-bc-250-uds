@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -e
 
 # Функция для обнаружения дистрибутива
 detect_distro() {
