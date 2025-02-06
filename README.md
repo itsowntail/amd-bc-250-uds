@@ -40,6 +40,6 @@ Before running the script, ensure the following:
 To download and execute the script directly from GitHub, run the following command in your terminal:
 
 ```bash
-curl -s https://raw.githubusercontent.com/itsowntail/amd-bc-250-udss/refs/heads/main/bc250udss.sh -o bc250udss.sh
+curl -s https://raw.githubusercontent.com/itsowntail/amd-bc-250-udss/refs/heads/main/bc250udss.sh -o  bc250udss.sh
 chmod +x bc250udss.sh
 ./bc250udss.sh
